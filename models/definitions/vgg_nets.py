@@ -8,8 +8,9 @@ class Vgg16(torch.nn.Module): #also this isn't the original papers vgg16 conv st
         super().__init__()
         vgg_pretrained_features = vgg16(weights=VGG16_Weights.DEFAULT).features
         self.layer_names=['relu1_1','relu2_1','relu2_2','relu3_1','relu3_2','relu4_1','relu4_2','relu4_3','relu5_1']# added relu4_2 in my version
-        self.content_feature_maps_index=4 #this is like in the middle (not to deep not to early) sooo this would capture semantics properly
+        self.content_feature_maps_index=5 #this is like in the middle (not to deep not to early) sooo this would capture semantics properly
         self.style_feature_maps_indices=list(range(len(self.layer_names)))
+        self.style_feature_maps_indices.remove(self.content_feature_maps_index)
         self.vgg_outputs=namedtuple("VggOutputs", self.layer_names)
         
         self.conv1_1=vgg_pretrained_features[0]
@@ -103,7 +104,7 @@ class Vgg19(torch.nn.Module):
         super().__init__()
 
         vgg = vgg19(weights=VGG19_Weights.DEFAULT).features
-        self.layer_names=['conv1_1','conv2_1','conv3_1','conv4_1','conv4_2','conv5_1'] # this is acc to the original paper of vgg19
+        self.layer_names=['relu1_1','relu2_1','relu3_1','relu4_1','conv4_2','relu5_1'] # this is acc to the original paper of vgg19
         self.content_feature_maps_index = 4
         self.style_feature_maps_indices = [0,1,2,3,5] #4 i.e conv4_2 was removed in the original paper too
         self.vgg_outputs = namedtuple("VggOutputs", self.layer_names)
@@ -155,21 +156,20 @@ class Vgg19(torch.nn.Module):
                 
     def forward(self, x):
         x = self.conv1_1(x)
-        conv1_1 = x
-
-        x = self.relu1_1(x)
+        x=self.relu1_1(x)
+        relu1_1= x
         x = self.conv1_2(x)
         x = self.relu1_2(x)
         x = self.pool1(x)
         x = self.conv2_1(x)
-        conv2_1 = x
         x = self.relu2_1(x)
+        relu2_1=x
         x = self.conv2_2(x)
         x = self.relu2_2(x)
         x = self.pool2(x)
         x = self.conv3_1(x)
-        conv3_1 = x
         x = self.relu3_1(x)
+        relu3_1=x
         x = self.conv3_2(x)
         x = self.relu3_2(x)
         x = self.conv3_3(x)
@@ -178,8 +178,8 @@ class Vgg19(torch.nn.Module):
         x = self.relu3_4(x)
         x = self.pool3(x)
         x = self.conv4_1(x)
-        conv4_1 = x 
         x = self.relu4_1(x)
+        relu4_1=x
         x = self.conv4_2(x)
         conv4_2 = x
         x = self.relu4_2(x)
@@ -188,10 +188,11 @@ class Vgg19(torch.nn.Module):
         x = self.conv4_4(x)
         x = self.relu4_4(x)
         x = self.pool4(x)
+        
+        
         x = self.conv5_1(x)
-        conv5_1 = x
-        out=self.vgg_outputs(conv1_1,conv2_1,conv3_1,conv4_1,conv4_2,conv5_1)
+        x=self.relu5_1(x)
+        relu5_1=x
+        out=self.vgg_outputs(relu1_1,relu2_1,relu3_1,relu4_1,conv4_2,relu5_1)
 
         return out
-
-        
